@@ -70,7 +70,7 @@ h6 {
 </div>
 
 <!-- Button for submitting file to server and display in chart area -->
-<button onclick = "fileUploadDisplay()"> Submit URL </button>
+<input type="file" onchange = "fileUploadDisplay()" /Submit>
 
 <div id="chartArea"></div>
 
@@ -248,7 +248,12 @@ function curveChange(curve)
 
 function fileUploadDisplay()
 {
-
+  // Here the file should be uploaded to the server and from there turned into a href argument which is a URL which has
+  // to be returned back in a response so the urlSubmitted variable can get its value and finally modify the image 
+  // with a d3 selection and change the attribute
+  
+  
+  
 /* urlSubmitted = ;
  svg.select("image")
     .attr("xlink:href", urlSubmitted);
