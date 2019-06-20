@@ -7,11 +7,9 @@ body {
   overflow-x: hidden;
   font-family: 'Roboto Slab', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
-
 p {
   line-height: 1.75;
 }
-
 h1,
 h2,
 h3,
@@ -21,7 +19,6 @@ h6 {
   font-weight: 300;
   font-family: 'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
-
 </style>
 </head>
 <body>
@@ -64,13 +61,9 @@ h6 {
     <option value = "blue">blue</option>
 </select>
 
-<div id"textBoxForURL">
-  <p> Insert image address here </p>
-  <textarea id="urlAddress" width = "200" height = "10">Enter Here</textarea>
-</div>
-
 <!-- Button for submitting file to server and display in chart area -->
-<input type="file" onchange = "fileUploadDisplay()" /Submit>
+<input type="file" onchange = "fileUploadDisplay()" />
+<br>
 
 <div id="chartArea"></div>
 
@@ -82,23 +75,18 @@ h6 {
 
 
 <script>
-
-
 // Create data
 var points = [[200,400]];
 let selected = points[0];
 
-
 // Initiate Variables
 var chosenColor = "purple";
-var chosenCurve = d3.line().curve(d3.curveCardinal);
+var chosenCurve = d3.line().curve(d3.curveBasis);
 var urlSubmitted = "https://s2r.iucnredlist.org/sis2_images/919001022.jpg"
-
 
 // set the dimensions and margins of the graph
 var width = 1000,
     height = 600;
-
 
 // D3 SELECTIONS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -129,9 +117,11 @@ var path = svg.append("path")
               .attr("stroke", chosenColor)
               .attr("stroke-width", 1.5)
               .call(update);
-
 d3.select(window)
       .on("keydown", keydown);
+
+
+
 
 var arrayValues = [];
 const dataPoints = 10;
@@ -147,13 +137,13 @@ function submitPathData()
     var p = pathNode.getPointAtLength( currPoint * l);
     arrayValues.push(p.x,p.y);
    }
+
 // document.getElementById("dataArea").innerHTML = arrayValues;
 console.log(arrayValues); // Make a d3 selection for div area to display points
 console.log(l);            // Just to show how long the path is in pixels
 
+
 // Part 2 with Ajax make request to print response in dataArea
-
-
 var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
@@ -175,10 +165,7 @@ function colorChange(color)
  chosenColor = color;
  svg.select("path")
     .attr("stroke", chosenColor);
-
 }
-
-
 function curveChange(curve)
 {
  chosenCurve = curve;
@@ -243,9 +230,7 @@ function curveChange(curve)
 }
  svg.select("path")
     .attr("d", chosenCurve);
-
 }
-
 function fileUploadDisplay()
 {
   // Here the file should be uploaded to the server and from there turned into a href argument which is a URL which has
@@ -258,21 +243,16 @@ function fileUploadDisplay()
  svg.select("image")
     .attr("xlink:href", urlSubmitted);
 */
-
 }
-
 // Functions from here on are owned by Mike Bostock from ObservableHQ Spline Editor
-
 function update() 
   {
     svg.select("path")
          .attr("d", chosenCurve)
          .attr("stroke", chosenColor);
     
-
     const circle = svg.selectAll("g")
         .data(points, d => d)
-
     circle.enter().append("g")
         .call(g => g.append("circle")
             .attr("r", 22)
@@ -289,12 +269,9 @@ function update()
         .attr("transform", d => `translate(${d})`)
       .select("circle:last-child")
         .attr("fill", d => d === selected ? "red" : "green");
-
     circle.exit().remove();
     
   }
-
-
 function dragsubject() {
     let subject = d3.event.sourceEvent.target.__data__;
     if (!subject) {
@@ -304,19 +281,16 @@ function dragsubject() {
     }
     return subject;
   }
-
   function dragstarted() {
     selected = d3.event.subject;
     update();
   }
-
   function dragged() {
     d3.event.subject[0] = Math.max(0, Math.min(width, d3.event.x));
     d3.event.subject[1] = Math.max(0, Math.min(height, d3.event.y));
     points = points;
     update();
   }
-
   function keydown() {
     if (!selected) return;
     switch (d3.event.key) {
@@ -331,8 +305,6 @@ function dragsubject() {
       }
     }
   }
-
-
 </script>
 
 </body>
