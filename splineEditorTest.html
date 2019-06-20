@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Spline Editor</title>
+<style>
+body {
+  overflow-x: hidden;
+  font-family: 'Roboto Slab', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+p {
+  line-height: 1.75;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-weight: 300;
+  font-family: 'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+</style>
+</head>
+<body>
+
+<script src="https://d3js.org/d3.v4.js"></script>
+
+<h1>This is the Salamander Spline Editor.</h1>
+<h2>Rules for use.</h2>
+<p>Upload image address of salamander.</p>
+<p>Click and drag points to create spline.</p>
+<p>Selected point can be deleted with a backspace/delete press.</p>
+<p>When final path is created submit path with button at the bottom.</p>
+<p>Do not drag the path only drag the data points or there will be an error!</p>
+
+
+<select name="curveForm" onchange= "curveChange(this.value)">
+    <option value = 0>curveBasis</option>
+    <option value = 1>curveBasisClosed</option>
+    <option value = 2>curveBasisOpen</option>
+    <option value = 3>curveBundle</option>
+    <option value = 4>curveCardinal (recommended)</option>
+    <option value = 5>curveCardinalClosed</option>
+    <option value = 6>curveCardinalOpen</option>
+    <option value = 7>curveCatmullRom</option>
+    <option value = 8>curveCatmullRomClosed</option>
+    <option value = 9>curveCatmullRomOpen</option>
+    <option value = 10>curveLinear</option>
+    <option value = 11>curveLinearClosed</option>
+    <option value = 12>curveMonotoneX</option>
+    <option value = 13>curveMonotoneY</option>
+    <option value = 14>curveNatural</option>
+    <option value = 15>curveStep</option>
+    <option value = 16>curveStepAfter</option>
+    <option value = 17>curveStepBefore</option>
+  </select>
+
+<select name = "colorForm" onchange= "colorChange(this.value)">
+    <option value = "purple">purple</option>
+    <option value = "red">red</option>
+    <option value = "blue">blue</option>
+</select>
+
+<div id"textBoxForURL">
+  <p> Insert image address here </p>
+  <textarea id="urlAddress" width = "200" height = "10">Enter Here</textarea>
+</div>
+
+<!-- Button for submitting file to server and display in chart area -->
+<button onclick = "fileUploadDisplay()"> Submit URL </button>
+
+<div id="chartArea"></div>
+
+
+<!-- Button for submitting path at the end to get path data -->
+<button onclick = "submitPathData()"> Submit Path Data </button>
+
+<div id = "dataArea" height = "800" width = "900"></div>
+
+
+<script>
+
+
+// Create data
+var points = [[200,400]];
+let selected = points[0];
+
+
+// Initiate Variables
+var chosenColor = "purple";
+var chosenCurve = d3.line().curve(d3.curveCardinal);
+var urlSubmitted = "https://s2r.iucnredlist.org/sis2_images/919001022.jpg"
+
+
+// set the dimensions and margins of the graph
+var width = 1000,
+    height = 600;
+
+
+// D3 SELECTIONS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+// append the svg object to the body of the page
+var svg = d3.select("#chartArea")
+  .append("svg")
+    .attr("width", width)
+    .attr("height", height)
+    .attr("pointer-events", "all")
+      .call(d3.drag()
+         .subject(dragsubject)
+          .on("start", dragstarted)
+          .on("drag", dragged));
+
+var canvasImage = svg.append("image")
+                     .attr("width", width)
+                     .attr("height", height)
+                     .attr("xlink:href", urlSubmitted);
+
+var canvasRect = svg.append("rect")
+                    .attr("fill", "none")
+                    .attr("width", width)
+                    .attr("height", height);
+
+var path = svg.append("path")
+              .datum(points)
+              .attr("fill", "none")
+              .attr("stroke", chosenColor)
+              .attr("stroke-width", 1.5)
+              .call(update);
+
+d3.select(window)
+      .on("keydown", keydown);
+
+var arrayValues = [];
+const dataPoints = 10;
+
+function submitPathData() 
+{
+  arrayValues.splice(0,(dataPoints * 2));
+  var pathNode = path.node();
+  var l = pathNode.getTotalLength();
+  for (var i = 0; i <= (dataPoints - 1); i++)
+   {  
+    var currPoint = i / (dataPoints - 1);
+    var p = pathNode.getPointAtLength( currPoint * l);
+    arrayValues.push(p.x,p.y);
+   }
+// document.getElementById("dataArea").innerHTML = arrayValues;
+console.log(arrayValues); // Make a d3 selection for div area to display points
+console.log(l);            // Just to show how long the path is in pixels
+
+// Part 2 with Ajax make request to print response in dataArea
+
+
+var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      document.getElementById("dataArea").innerHTML =
+      this.responseText;
+    }
+  };
+  xhttp.open("POST", "cgi-bin/prog4.cgi", true);
+  xhttp.send(arrayValues);
+}
+
+
+
+
+
+// Functions !!!!!!!!!!!!!!
+function colorChange(color)
+{
+ chosenColor = color;
+ svg.select("path")
+    .attr("stroke", chosenColor);
+
+}
+
+
+function curveChange(curve)
+{
+ chosenCurve = curve;
+ switch(chosenCurve) {
+  case "0":
+    chosenCurve = d3.line().curve(d3.curveBasis);
+    break;
+  case "1":
+    chosenCurve = d3.line().curve(d3.curveBasisClosed);
+    break;
+  case "2":
+    chosenCurve = d3.line().curve(d3.curveBasisOpen);
+    break;
+  case "3":
+    chosenCurve = d3.line().curve(d3.curveBundle);
+    break;
+  case "4":
+    chosenCurve = d3.line().curve(d3.curveCardinal);
+    break;
+  case "5":
+    chosenCurve = d3.line().curve(d3.curveCardinalClosed);
+    break;
+  case "6":
+    chosenCurve = d3.line().curve(d3.curveCardinalOpen);
+    break;
+  case "7":
+    chosenCurve = d3.line().curve(d3.curveCatmullRom);
+    break;
+  case "8":
+    chosenCurve = d3.line().curve(d3.curveCatmullRomClosed);
+    break;
+  case "9":
+    chosenCurve = d3.line().curve(d3.curveCatmullRomOpen);
+    break;
+  case "10":
+    chosenCurve = d3.line().curve(d3.curveLinear);
+    break;
+  case "11":
+    chosenCurve = d3.line().curve(d3.curveLinearClosed);
+    break;
+  case "12":
+    chosenCurve = d3.line().curve(d3.curveMonotoneX);
+    break;
+  case "13":
+    chosenCurve = d3.line().curve(d3.curveMonotoneY);
+    break;
+  case "14":
+    chosenCurve = d3.line().curve(d3.curveNatural);
+    break;
+  case "15":
+    chosenCurve = d3.line().curve(d3.curveStep);
+    break;
+  case "16":
+    chosenCurve = d3.line().curve(d3.curveStepBefore);
+    break;
+  case "17":
+    chosenCurve = d3.line().curve(d3.curveStepAfter);
+    break;
+  default:
+    chosenCurve = d3.line().curve(d3.curveCardinal);
+    break;
+}
+ svg.select("path")
+    .attr("d", chosenCurve);
+
+}
+
+function fileUploadDisplay()
+{
+
+/* urlSubmitted = ;
+ svg.select("image")
+    .attr("xlink:href", urlSubmitted);
+*/
+
+}
+
+// Functions from here on are owned by Mike Bostock from ObservableHQ Spline Editor
+
+function update() 
+  {
+    svg.select("path")
+         .attr("d", chosenCurve)
+         .attr("stroke", chosenColor);
+    
+
+    const circle = svg.selectAll("g")
+        .data(points, d => d)
+
+    circle.enter().append("g")
+        .call(g => g.append("circle")
+            .attr("r", 22)
+            .attr("fill", "none"))
+        .call(g => g.append("circle") // creates drag area
+            .attr("r", 22)
+            .attr("stroke", "black")
+            .attr("stroke-width", 1.5)
+          .transition()               // creates actual visible circle
+            .duration(750)
+            .ease(d3.easeElastic)
+            .attr("r", 4))
+      .merge(circle)
+        .attr("transform", d => `translate(${d})`)
+      .select("circle:last-child")
+        .attr("fill", d => d === selected ? "red" : "green");
+
+    circle.exit().remove();
+    
+  }
+
+
+function dragsubject() {
+    let subject = d3.event.sourceEvent.target.__data__;
+    if (!subject) {
+      points.push(subject = [d3.event.x, d3.event.y]);
+      points = points;
+      update();
+    }
+    return subject;
+  }
+
+  function dragstarted() {
+    selected = d3.event.subject;
+    update();
+  }
+
+  function dragged() {
+    d3.event.subject[0] = Math.max(0, Math.min(width, d3.event.x));
+    d3.event.subject[1] = Math.max(0, Math.min(height, d3.event.y));
+    points = points;
+    update();
+  }
+
+  function keydown() {
+    if (!selected) return;
+    switch (d3.event.key) {
+      case "Backspace":
+      case "Delete": {
+        const i = points.indexOf(selected);
+        points.splice(i, 1);
+        points = points;
+        selected = points.length ? points[i > 0 ? i - 1 : 0] : null;
+        update();
+        break;
+      }
+    }
+  }
+
+
+</script>
+
+</body>
+</html>
