@@ -9,6 +9,8 @@ body {
 }
 p {
   line-height: 1.75;
+  font-family: 'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 18px;
 }
 h1,
 h2,
@@ -18,21 +20,25 @@ h5,
 h6 {
   font-weight: 300;
   font-family: 'Montserrat', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 25px;
 }
+button
 </style>
 </head>
 <body>
 
 <script src="https://d3js.org/d3.v4.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
 <h1>This is the Salamander Spline Editor.</h1>
-<h2>Rules for use.</h2>
+<h2>Rules for use.
 <p>Upload image address of salamander.</p>
 <p>Click and drag points to create spline.</p>
 <p>Selected point can be deleted with a backspace/delete press.</p>
 <p>When final path is created submit path with button at the bottom.</p>
 <p>Do not drag the path only drag the data points or there will be an error!</p>
-
+<p>Zoom out if image is too large.</p>
+</h2>
 
 <select name="curveForm" onchange= "curveChange(this.value)">
     <option value = 0>curveBasis</option>
@@ -61,9 +67,20 @@ h6 {
     <option value = "blue">blue</option>
 </select>
 
-<!-- Button for submitting file to server and display in chart area -->
-<input type="file" onchange = "fileUploadDisplay()" />
-<br>
+
+<select id = "documentSize" onchange= "documentSizeChange(this.value)">
+    <option value = "small">small</option>
+    <option value = "medium">medium</option>
+    <option value = "large">large</option>
+</select>
+
+
+<form id = 'form' action="/cgi-bin/upload2.cgi" method="post" enctype="multipart/form-data" target = "_blank">
+    Select image to upload:
+    <input type="file" name="file" id="file">
+    <input type="submit" value="Upload Image" name="submit" onclick= "uploadFileAndDisplay()">
+</form>
+
 
 <div id="chartArea"></div>
 
@@ -71,7 +88,9 @@ h6 {
 <!-- Button for submitting path at the end to get path data -->
 <button onclick = "submitPathData()"> Submit Path Data </button>
 
-<div id = "dataArea" height = "800" width = "900"></div>
+<div id = "dataArea" height = "1000" width = "300">
+ <data  id = "dataAreaText" style = "font-size: 40px;"> Data points shown here </data>
+</div>
 
 
 <script>
@@ -80,18 +99,23 @@ var points = [[200,400]];
 let selected = points[0];
 
 // Initiate Variables
-var chosenColor = "purple";
-var chosenCurve = d3.line().curve(d3.curveBasis);
+var chosenColor = "purple",
+    chosenCurve = d3.line().curve(d3.curveBasis),
+    chosenStrokeWidth = 2,
+    chosenPointSize = 4;
+
 var urlSubmitted = "https://s2r.iucnredlist.org/sis2_images/919001022.jpg"
 
 // set the dimensions and margins of the graph
-var width = 1000,
-    height = 600;
+var width = 4288,
+    height = 2848;
 
 // D3 SELECTIONS !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 // append the svg object to the body of the page
 var svg = d3.select("#chartArea")
+            .attr("width", 5000)
+            .attr("height", 5000)
   .append("svg")
     .attr("width", width)
     .attr("height", height)
@@ -101,21 +125,18 @@ var svg = d3.select("#chartArea")
           .on("start", dragstarted)
           .on("drag", dragged));
 
+// Append dummy image for the page
 var canvasImage = svg.append("image")
                      .attr("width", width)
                      .attr("height", height)
                      .attr("xlink:href", urlSubmitted);
 
-var canvasRect = svg.append("rect")
-                    .attr("fill", "none")
-                    .attr("width", width)
-                    .attr("height", height);
-
+//Create single path point
 var path = svg.append("path")
               .datum(points)
               .attr("fill", "none")
               .attr("stroke", chosenColor)
-              .attr("stroke-width", 1.5)
+              .attr("stroke-width", chosenStrokeWidth)
               .call(update);
 d3.select(window)
       .on("keydown", keydown);
@@ -132,27 +153,33 @@ function submitPathData()
   var pathNode = path.node();
   var l = pathNode.getTotalLength();
   for (var i = 0; i <= (dataPoints - 1); i++)
-   {  
+  {  
     var currPoint = i / (dataPoints - 1);
     var p = pathNode.getPointAtLength( currPoint * l);
     arrayValues.push(p.x,p.y);
-   }
-
+  }
 // document.getElementById("dataArea").innerHTML = arrayValues;
 console.log(arrayValues); // Make a d3 selection for div area to display points
 console.log(l);            // Just to show how long the path is in pixels
+
+
+   var stringArrayValues = "";
+   for (var i=0; i < arrayValues.length; i++)
+   {
+     stringArrayValues += arrayValues[i] + " ";
+   }
 
 
 // Part 2 with Ajax make request to print response in dataArea
 var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-      document.getElementById("dataArea").innerHTML =
-      this.responseText;
+alert(this.responseText);
+      document.getElementById("dataAreaText").innerHTML = this.responseText;
     }
   };
   xhttp.open("POST", "cgi-bin/prog4.cgi", true);
-  xhttp.send(arrayValues);
+  xhttp.send(stringArrayValues);
 }
 
 
@@ -231,19 +258,108 @@ function curveChange(curve)
  svg.select("path")
     .attr("d", chosenCurve);
 }
-function fileUploadDisplay()
+
+function documentSizeChange(strokeWidth)
+{
+ chosenStrokeWidth = strokeWidth;
+ switch(chosenStrokeWidth) 
+ {
+  case "small":
+    chosenStrokeWidth = 2;
+    chosenPointSize = 4;
+    d3.selectAll("h1").style("font-size", 25 + 'px');
+    d3.selectAll("h2").style("font-size", 23 + 'px');
+    d3.selectAll("p").style("font-size", 18 + 'px');
+    break;
+  case "medium":
+    chosenStrokeWidth = 7;
+    chosenPointSize = 12;
+    d3.selectAll("h1").style("font-size", 50 + 'px');
+    d3.selectAll("h2").style("font-size", 45 + 'px');
+    d3.selectAll("p").style("font-size", 36 + 'px');
+    break;
+  case "large":
+    chosenStrokeWidth = 10;
+    chosenPointSize = 16;
+    d3.selectAll("h1").style("font-size", 100 + 'px');
+    d3.selectAll("h2").style("font-size", 85 + 'px');
+    d3.selectAll("p").style("font-size", 64 + 'px');
+    break;
+  }
+
+ svg.select("path")
+    .attr("stroke-width", chosenStrokeWidth);
+
+ svg.selectAll("g").select("circle:nth-child(2)")
+    .attr("r", chosenPointSize);
+update();
+}
+
+
+var _URL = window.URL || window.webkitURL;
+
+$("#file").change(function(e) {
+    var file, img;
+
+
+    if ((file = this.files[0])) {
+        img = new Image();
+        img.onload = function() {
+            alert("This image is " +this.width + " pixels wide and  " + this.height + " pixels tall");
+            width = this.width;
+            height = this.height;
+        if (height > 1000 || width > 1000)
+        {
+         document.getElementById("documentSize").value = "large";
+         documentSizeChange("large");
+        }
+        else if (height > 700 || width > 700)
+        {
+         documentSizeChange("medium");
+        }
+
+svg.attr("width", width)
+           .attr("height", height);
+        svg.select("image")
+           .attr("width", width)
+           .attr("height", height);
+        };
+        img.onerror = function() {
+            alert( "not a valid file: " + file.type);
+        };
+        img.src = _URL.createObjectURL(file);
+
+
+    }
+
+});
+
+function uploadFileAndDisplay()
 {
   // Here the file should be uploaded to the server and from there turned into a href argument which is a URL which has
   // to be returned back in a response so the urlSubmitted variable can get its value and finally modify the image 
   // with a d3 selection and change the attribute
-  
-  
-  
-/* urlSubmitted = ;
- svg.select("image")
-    .attr("xlink:href", urlSubmitted);
-*/
+var form = $('form')[0];
+var formData = new FormData(form);
+
+$.ajax({
+    url: '/cgi-bin/upload2.cgi',
+    data: formData,
+    type: 'POST',
+    contentType: false, // NEEDED, DON'T OMIT THIS (requires jQuery 1.6+)
+    processData: false, // NEEDED, DON'T OMIT THIS
+    // ... Other options like success and etc
+});
+
+//Old thing here
+
+ urlSubmitted = "/files/" + document.getElementById("file").files[0].name;
+      d3.select("image")
+        .attr("xlink:href", urlSubmitted);
 }
+
+
+
 // Functions from here on are owned by Mike Bostock from ObservableHQ Spline Editor
 function update() 
   {
@@ -264,7 +380,7 @@ function update()
           .transition()               // creates actual visible circle
             .duration(750)
             .ease(d3.easeElastic)
-            .attr("r", 4))
+            .attr("r", chosenPointSize))
       .merge(circle)
         .attr("transform", d => `translate(${d})`)
       .select("circle:last-child")
