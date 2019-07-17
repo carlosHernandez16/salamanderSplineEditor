@@ -32,12 +32,13 @@ button
 
 <h1>This is the Salamander Spline Editor.</h1>
 <h2>Rules for use.
-<p>Upload image address of salamander.</p>
-<p>Click and drag points to create spline.</p>
-<p>Selected point can be deleted with a backspace/delete press.</p>
-<p>When final path is created submit path with button at the bottom.</p>
-<p>Do not drag the path only drag the data points or there will be an error!</p>
-<p>Zoom out if image is too large.</p>
+<p>Choose file and upload image of salamander.<br>
+   Click and drag points to create spline.<br>
+   Selected point can be deleted with a backspace/delete press.<br>
+   When final path is created submit path with button at the bottom.<br>
+   Do not drag the path. Only drag the data points or there will be an error!<br>
+   Zoom out if image is too large.<br>
+</p>
 </h2>
 
 <select name="curveForm" onchange= "curveChange(this.value)">
@@ -89,7 +90,9 @@ button
 <button onclick = "submitPathData()"> Submit Path Data </button>
 
 <div id = "dataArea" height = "1000" width = "300">
+ <img id = "dewarpImg" style = "display: none" src="files/2017_O-6.jpg" height="2848" width="4288"><br></img>
  <data  id = "dataAreaText" style = "font-size: 40px;"> Data points shown here </data>
+ <button id = "submissionToDatabaseBtn" style = "display:none">Submit to DB</button>
 </div>
 
 
@@ -97,6 +100,8 @@ button
 // Create data
 var points = [[200,400]];
 let selected = points[0];
+var imgFileName = "";
+
 
 // Initiate Variables
 var chosenColor = "purple",
@@ -146,6 +151,9 @@ d3.select(window)
 
 var arrayValues = [];
 const dataPoints = 10;
+var stringArrayValues = "";
+
+
 
 function submitPathData() 
 {
@@ -163,22 +171,26 @@ console.log(arrayValues); // Make a d3 selection for div area to display points
 console.log(l);            // Just to show how long the path is in pixels
 
 
-   var stringArrayValues = "";
+   stringArrayValues = "";
+   stringArrayValues = urlSubmitted.slice(7) + "+";
    for (var i=0; i < arrayValues.length; i++)
    {
      stringArrayValues += arrayValues[i] + " ";
    }
+   alert(stringArrayValues);
 
 
 // Part 2 with Ajax make request to print response in dataArea
 var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-alert(this.responseText);
-      document.getElementById("dataAreaText").innerHTML = this.responseText;
+      alert(this.responseText);
+      showDataArea();
+      document.getElementById("dewarpImg").src = "/files/" + this.responseText;
+
     }
   };
-  xhttp.open("POST", "cgi-bin/prog4.cgi", true);
+  xhttp.open("POST", "cgi-bin/prog5.cgi", true);
   xhttp.send(stringArrayValues);
 }
 
@@ -300,32 +312,39 @@ var _URL = window.URL || window.webkitURL;
 
 $("#file").change(function(e) {
     var file, img;
+    hideDataArea();    
 
-
-    if ((file = this.files[0])) {
+    if ((file = this.files[0])) 
+    {
         img = new Image();
-        img.onload = function() {
-            alert("This image is " +this.width + " pixels wide and  " + this.height + " pixels tall");
-            width = this.width;
-            height = this.height;
-        if (height > 1000 || width > 1000)
+        img.onload = function() 
         {
-         document.getElementById("documentSize").value = "large";
-         documentSizeChange("large");
-        }
-        else if (height > 700 || width > 700)
-        {
-         documentSizeChange("medium");
-        }
+          alert("This image is " +this.width + " pixels wide and  " + this.height + " pixels tall");
+          width = this.width;
+          height = this.height;
+          document.getElementById("dewarpImg").height = height;
+          document.getElementById("dewarpImg").width = width;
+ 
+          if (height > 1000 || width > 1000)
+          {
+           document.getElementById("documentSize").value = "large" 
+           documentSizeChange("large");
+          }
+          else if (height > 700 || width > 700)
+          {
+           documentSizeChange("medium");
+          }
 
-svg.attr("width", width)
-           .attr("height", height);
-        svg.select("image")
-           .attr("width", width)
-           .attr("height", height);
+         svg.attr("width", width)
+            .attr("height", height);
+         svg.select("image")
+            .attr("width", width)
+            .attr("height", height);
         };
-        img.onerror = function() {
-            alert( "not a valid file: " + file.type);
+        
+        img.onerror = function() 
+        {
+         alert( "not a valid file: " + file.type);
         };
         img.src = _URL.createObjectURL(file);
 
@@ -351,12 +370,26 @@ $.ajax({
     // ... Other options like success and etc
 });
 
-//Old thing here
 
  urlSubmitted = "/files/" + document.getElementById("file").files[0].name;
       d3.select("image")
         .attr("xlink:href", urlSubmitted);
 }
+
+function showDataArea()
+{
+ document.getElementById("dataAreaText").innerHTML = "Is this image suitable for submission?";
+ document.getElementById("submissionToDatabaseBtn").style.display = "inline";
+ document.getElementById("dewarpImg").style.display = "inline";
+}
+function hideDataArea()
+{
+ document.getElementById("dataAreaText").innerHTML = "Data displayed here";
+ document.getElementById("submissionToDatabaseBtn").style.display = "hidden";
+ document.getElementById("dewarpImg").style.display = "hidden";
+ document.getElementById("dewarpImg").src = "";
+}
+
 
 
 
