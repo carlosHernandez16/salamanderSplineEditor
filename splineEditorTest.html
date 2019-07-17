@@ -38,6 +38,7 @@ button
    When final path is created submit path with button at the bottom.<br>
    Do not drag the path. Only drag the data points or there will be an error!<br>
    Zoom out if image is too large.<br>
+   Upload Image button needs two clicks<br>
 </p>
 </h2>
 
@@ -76,10 +77,10 @@ button
 </select>
 
 
-<form id = 'form' action="/cgi-bin/upload2.cgi" method="post" enctype="multipart/form-data" target = "_blank">
+<form id = 'form' >
     Select image to upload:
     <input type="file" name="file" id="file">
-    <input type="submit" value="Upload Image" name="submit" onclick= "uploadFileAndDisplay()">
+    <button type= "button" onclick= "uploadFileAndDisplay()">Upload Image</button>
 </form>
 
 
@@ -175,7 +176,7 @@ console.log(l);            // Just to show how long the path is in pixels
    stringArrayValues = urlSubmitted.slice(7) + "+";
    for (var i=0; i < arrayValues.length; i++)
    {
-     stringArrayValues += arrayValues[i] + " ";
+     stringArrayValues += arrayValues[i] + "+";
    }
    alert(stringArrayValues);
 
@@ -385,8 +386,8 @@ function showDataArea()
 function hideDataArea()
 {
  document.getElementById("dataAreaText").innerHTML = "Data displayed here";
- document.getElementById("submissionToDatabaseBtn").style.display = "hidden";
- document.getElementById("dewarpImg").style.display = "hidden";
+ document.getElementById("submissionToDatabaseBtn").style.display = "none";
+ document.getElementById("dewarpImg").style.display = "none";
  document.getElementById("dewarpImg").src = "";
 }
 
